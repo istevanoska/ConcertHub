@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="mk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ConcertHub — Тест панел</title>
+<style>
+  :root{
+    --bg:#f6f4fa; --panel:#fff; --ink:#1b1626; --muted:#6c6480; --line:#e7e2ef;
+    --accent:#9b2fb0; --accent-ink:#fff; --soft:#f3e6f7; --ok:#17864a; --ok-soft:#e3f5ea;
+    --warn:#b4402a; --code:#f2eef8;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --bg:#131019; --panel:#1d1928; --ink:#f1eef6; --muted:#a69fb6; --line:#2c2740;
+      --accent:#c264e0; --accent-ink:#fff; --soft:#2a1c38; --ok:#3ac47c; --ok-soft:#16301f;
+      --warn:#ff7a5c; --code:#171320; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.5}
+  .wrap{max-width:1000px;margin:0 auto;padding:24px 18px 70px}
+  header{border-bottom:2px solid var(--accent);padding-bottom:14px;margin-bottom:22px}
+  .eyebrow{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);font-weight:700}
+  h1{margin:4px 0 2px;font-size:26px;letter-spacing:-.01em}
+  .lead{color:var(--muted);font-size:14px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 18px 20px;margin-bottom:16px}
+  .card h2{margin:0 0 4px;font-size:16px;display:flex;align-items:center;gap:10px}
+  .num{width:24px;height:24px;border-radius:7px;background:var(--soft);color:var(--accent);
+    font-weight:800;font-size:13px;display:grid;place-items:center;flex:none}
+  .hint{color:var(--muted);font-size:13px;margin:0 0 12px}
+  button{font:inherit;font-weight:600;cursor:pointer;border:0;border-radius:9px;
+    background:var(--accent);color:var(--accent-ink);padding:9px 15px;transition:filter .15s}
+  button:hover{filter:brightness(1.08)}
+  button.ghost{background:transparent;color:var(--accent);border:1px solid var(--line)}
+  button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  select,input{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);
+    border-radius:9px;padding:8px 10px;min-width:0}
+  .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  label{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:10px}
+  th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line);white-space:nowrap}
+  th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+  .tablewrap{overflow-x:auto}
+  .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700}
+  .pill.sold{background:var(--warn);color:#fff}
+  .pill.ok{background:var(--ok-soft);color:var(--ok)}
+  .out{background:var(--code);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-top:12px;font-size:13.5px}
+  .out.ok{border-color:var(--ok)}
+  .out.err{border-color:var(--warn);color:var(--warn)}
+  .email{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-top:10px}
+  .email .meta{font-size:12px;color:var(--muted);margin-bottom:8px;border-bottom:1px dashed var(--line);padding-bottom:6px}
+  .big{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}
+  code{background:var(--code);padding:1px 6px;border-radius:5px;font-size:12.5px}
+  a.dl{display:inline-block;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">ConcertHub · тест панел</div>
+    <h1>🎤 Концерти &amp; билети</h1>
+    <p class="lead">Тестирај ги функционалностите со кликање. Купувањето билет праќа email (види чекор 3) и се одразува во извештајот за приход (чекор 4). <a href="/swagger" style="color:var(--accent)">Swagger →</a></p>
+  </header>
+
+  <!-- 1. CONCERTS -->
+  <div class="card">
+    <h2><span class="num">1</span> Концерти</h2>
+    <p class="hint">Листа од сите концерти со продадени билети и капацитет на салата.</p>
+    <button onclick="loadConcerts()">Вчитај концерти</button>
+    <div class="tablewrap"><table id="concertsTable" hidden>
+      <thead><tr><th>Концерт</th><th>Сала</th><th>Датум</th><th class="num">Цена</th><th class="num">Продадени / Капацитет</th><th>Статус</th></tr></thead>
+      <tbody></tbody></table></div>
+  </div>
+
+  <!-- 2. BUY -->
+  <div class="card">
+    <h2><span class="num">2</span> Купи билет <span style="font-weight:400;color:var(--muted);font-size:13px">(тернарна врска: корисник × концерт × категорија)</span></h2>
+    <p class="hint">Цената се пресметува автоматски: основна цена × множител на категоријата. Ако салата е полна → грешка „sold out“.</p>
+    <div class="row">
+      <label>Концерт<select id="buyConcert" style="min-width:220px"></select></label>
+      <label>Категорија<select id="buyCategory" style="min-width:160px"></select></label>
+      <label>Купувач<span id="buyerName" style="color:var(--ink);font-weight:600">—</span></label>
+      <button class="ghost" onclick="newBuyer()">Нов купувач</button>
+      <button onclick="buyTicket()">Купи билет</button>
+    </div>
+    <div id="buyOut"></div>
+  </div>
+
+  <!-- 3. EMAIL -->
+  <div class="card">
+    <h2><span class="num">3</span> Email потврди (outbox)</h2>
+    <p class="hint">При купување се праќа email потврда. Во development се снима локално — еве ги последните пораки.</p>
+    <button onclick="loadEmails()">Вчитај испратени email-ови</button>
+    <div id="emailsOut"></div>
+  </div>
+
+  <!-- 4. REVENUE + EXCEL -->
+  <div class="card">
+    <h2><span class="num">4</span> Извештај за приход + Excel</h2>
+    <p class="hint">Приход и пополнетост по концерт. Може да се симне како Excel фајл.</p>
+    <div class="row">
+      <button onclick="loadRevenue()">Вчитај извештај</button>
+      <a class="dl" href="/api/report/revenue/excel"><button class="ghost">⬇ Симни Excel (.xlsx)</button></a>
+    </div>
+    <div class="tablewrap"><table id="revTable" hidden>
+      <thead><tr><th>Концерт</th><th>Сала</th><th class="num">Продадени</th><th class="num">Капацитет</th><th class="num">Пополнетост</th><th class="num">Приход</th></tr></thead>
+      <tbody></tbody></table></div>
+  </div>
+
+  <!-- 5. ETL -->
+  <div class="card">
+    <h2><span class="num">5</span> ETL — увоз на изведувачи од iTunes</h2>
+    <p class="hint">Презема реални изведувачи од надворешно API (iTunes), ги трансформира и снима во база.</p>
+    <button onclick="runEtl()">Пушти ETL увоз</button>
+    <div id="etlOut"></div>
+  </div>
+
+  <!-- 6. QUEUE -->
+  <div class="card">
+    <h2><span class="num">6</span> Queue — асинхроно (надворешен систем)</h2>
+    <p class="hint">Праќа барање за билет преку заштитен endpoint (API-key). Барањето влегува во редица и се обработува во позадина.</p>
+    <div class="row">
+      <button onclick="sendExternal()">Прати барање (pending)</button>
+      <button class="ghost" onclick="checkExternal()" id="checkBtn" disabled>Провери статус</button>
+    </div>
+    <div id="queueOut"></div>
+  </div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+let buyer = null;
+let categories = [];
+let lastEventId = null;
+const API_KEY = "concert-external-key-123";
+
+function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function money(n){return Number(n).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});}
+function out(el,msg,cls){el.innerHTML=`<div class="out ${cls||''}">${msg}</div>`;}
+
+async function api(path, opts){
+  const res = await fetch(path, opts);
+  const text = await res.text();
+  let data; try{data=JSON.parse(text);}catch{data=text;}
+  if(!res.ok){
+    const m = (data && data.title) ? data.title : (typeof data==="string"? data.split("\n")[0] : "Грешка "+res.status);
+    throw new Error(m);
+  }
+  return data;
+}
+
+async function loadConcerts(){
+  const list = await api("/api/concert");
+  const tb = $("#concertsTable tbody"); tb.innerHTML="";
+  const sel = $("#buyConcert"); sel.innerHTML="";
+  list.slice(0,60).forEach(c=>{
+    const sold = c.isSoldOut;
+    tb.insertAdjacentHTML("beforeend",
+      `<tr><td>${esc(c.title)}</td><td>${esc(c.venueName)}</td>
+       <td>${new Date(c.startTime).toLocaleDateString()}</td>
+       <td class="num">${money(c.basePrice)}</td>
+       <td class="num">${c.ticketsSold} / ${c.venueCapacity}</td>
+       <td>${sold?'<span class="pill sold">Sold out</span>':'<span class="pill ok">Достапно</span>'}</td></tr>`);
+    const o=document.createElement("option");o.value=c.id;o.textContent=c.title+" — "+c.venueName;sel.appendChild(o);
+  });
+  $("#concertsTable").hidden=false;
+  if(!categories.length) await loadCategories();
+}
+
+async function loadCategories(){
+  categories = await api("/api/ticketcategory");
+  const sel=$("#buyCategory"); sel.innerHTML="";
+  categories.forEach(c=>{
+    const o=document.createElement("option");o.value=c.id;o.textContent=`${c.name} (×${c.priceMultiplier})`;sel.appendChild(o);
+  });
+}
+
+async function newBuyer(){
+  const n=Math.floor(Math.random()*100000);
+  const email=`kupuvac${n}@test.com`;
+  const data=await api("/api/auth/register",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({email,password:"Password123!",firstName:"Kupuvac",lastName:"#"+n})});
+  buyer={id:data.userId,email};
+  $("#buyerName").textContent=email;
+  return buyer;
+}
+
+async function buyTicket(){
+  const el=$("#buyOut");
+  try{
+    if(!buyer) await newBuyer();
+    if(!$("#buyConcert").value){await loadConcerts();}
+    const body={concertId:$("#buyConcert").value,ticketCategoryId:$("#buyCategory").value,
+      userId:buyer.id,seatNumber:"A"+Math.floor(Math.random()*40+1)};
+    const t=await api("/api/ticket/buy",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+    out(el,`✓ Билет купен за <b>${esc(t.concertTitle)}</b><br>
+      Категорија: <b>${esc(t.category)}</b> · Статус: <b>${esc(t.status)}</b> · Место: ${esc(t.seatNumber)}<br>
+      Цена: <span class="big">${money(t.price)} EUR</span><br>
+      <span style="color:var(--muted)">📧 Испратена е email потврда — види чекор 3.</span>`,"ok");
+    loadConcerts();
+  }catch(e){ out(el,"✗ "+esc(e.message),"err"); }
+}
+
+async function loadEmails(){
+  const el=$("#emailsOut");
+  try{
+    const list=await api("/api/report/emails");
+    if(!list.length){out(el,"Нема испратени email-ови сè уште. Купи билет во чекор 2.","");return;}
+    el.innerHTML=list.map(m=>`<div class="email">
+      <div class="meta">До: <b>${esc(m.to)}</b> · Тема: <b>${esc(m.subject)}</b></div>
+      <div>${m.body}</div></div>`).join("");
+  }catch(e){ out(el,"✗ "+esc(e.message),"err"); }
+}
+
+async function loadRevenue(){
+  const list=await api("/api/report/revenue");
+  const tb=$("#revTable tbody"); tb.innerHTML="";
+  list.slice(0,80).forEach(r=>{
+    tb.insertAdjacentHTML("beforeend",
+      `<tr><td>${esc(r.title)}</td><td>${esc(r.venueName)}</td>
+       <td class="num">${r.ticketsSold}</td><td class="num">${r.venueCapacity}</td>
+       <td class="num">${(r.occupancyRate*100).toFixed(1)}%</td>
+       <td class="num">${money(r.totalRevenue)}</td></tr>`);
+  });
+  $("#revTable").hidden=false;
+}
+
+async function runEtl(){
+  const el=$("#etlOut");
+  out(el,"⏳ Се презема од iTunes...","");
+  try{
+    await api("/api/report/etl/run",{method:"POST"});
+    const artists=await api("/api/artist");
+    const sample=artists.slice(0,8).map(a=>a.name).join(", ");
+    out(el,`✓ Увозот заврши. Вкупно изведувачи: <b>${artists.length}</b><br>
+      <span style="color:var(--muted)">Пример: ${esc(sample)}…</span>`,"ok");
+  }catch(e){ out(el,"✗ "+esc(e.message),"err"); }
+}
+
+async function sendExternal(){
+  const el=$("#queueOut");
+  try{
+    if(!buyer) await newBuyer();
+    if(!$("#buyConcert").value) await loadConcerts();
+    const body={concertId:$("#buyConcert").value,ticketCategoryId:categories[0].id,userId:buyer.id};
+    const r=await api("/api/external/tickets/register",{method:"POST",
+      headers:{"Content-Type":"application/json","X-Api-Key":API_KEY},body:JSON.stringify(body)});
+    lastEventId=r.id;
+    $("#checkBtn").disabled=false;
+    out(el,`✓ Барањето е во редица · id: <code>${esc(r.id)}</code> · статус: <b>${esc(r.status)}</b><br>
+      <span style="color:var(--muted)">Почекај ~15с па кликни „Провери статус“.</span>`,"ok");
+  }catch(e){ out(el,"✗ "+esc(e.message),"err"); }
+}
+
+async function checkExternal(){
+  const el=$("#queueOut");
+  try{
+    const r=await api(`/api/external/tickets/register/${lastEventId}/status`,{headers:{"X-Api-Key":API_KEY}});
+    const done=r.status==="completed";
+    out(el,`Статус: <b>${esc(r.status)}</b>${r.ticketId?` · создаден билет: <code>${esc(r.ticketId)}</code>`:""}${r.error?` · грешка: ${esc(r.error)}`:""}`,done?"ok":"");
+  }catch(e){ out(el,"✗ "+esc(e.message),"err"); }
+}
+
+// автоматски подготви купувач и вчитај концерти на старт
+newBuyer().catch(()=>{});
+loadConcerts().catch(()=>{});
+</script>
+</body>
+</html>

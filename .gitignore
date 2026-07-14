@@ -1,0 +1,24 @@
+# Build output
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+*.user
+
+# Rider / IDE
+.idea/
+.vs/
+*.suo
+
+# SQLite database + generated files
+*.db
+*.db-shm
+*.db-wal
+
+# Dev artifacts (email outbox, uploaded files)
+Web/wwwroot/outbox/
+Web/wwwroot/uploads/
+
+# OS
+.DS_Store
+Thumbs.db
