@@ -1,69 +1,45 @@
-# Concert & Music Platform
+# ConcertHub
 
-A .NET 9 backend for managing concerts, artists, venues and ticket sales, built with the
-**Onion architecture** (Domain → Repository → Service → Web), mirroring the structure of the
-`ConsultationsApplication` reference exam solution.
+Бекенд апликација за концерти и продажба на билети, направена со .NET 9.
 
-## Projects
+Архитектурата е поделена во 4 проекти (Onion architecture):
 
-| Project | Responsibility |
-|---|---|
-| **Domain** | Entities (`Models`), `Common` base entities, `Dto`, `Enums`, `Config` option classes, `ExternalModels`. No dependencies. |
-| **Repository** | `ApplicationDbContext` (EF Core + Identity), generic `IRepository<T>`/`Repository<T>`, bulk `ConcertsRepository`. |
-| **Service** | Business logic (`Interface` + `Implementation`), integration services, and hosted `BackgroundService`s. |
-| **Web** | Controllers, `Mapper`s, `Request`/`Response` records, `Extensions`, API-key `Middleware`, audit `Interceptor`, `DbSeeder`, `Program.cs`. |
+- **Domain** — модели (Artist, Venue, Concert, Ticket...) и enum-и
+- **Repository** — работа со базата (Entity Framework Core + SQLite)
+- **Service** — бизнис логика (купување билет, ETL, email, QR, Excel...)
+- **Web** — API контролери + едноставен UI за тестирање
 
-## Domain model (9 entities, incl. a ternary relation)
-
-- **Artist**, **Venue**, **Concert**, **TicketCategory** — core catalog entities.
-- **Ticket** — **ternary relation** connecting `User` × `Concert` × `TicketCategory`.
-- **Performance** — concert lineup (`Artist` × `Concert`).
-- **ApiClient**, **EtlSyncLog**, **InboundEventEntry** — integration/infra entities.
-- **ConcertApplicationUser** — ASP.NET Identity user.
-
-## Exam requirements → where they live
-
-| Requirement | Implementation |
-|---|---|
-| Onion architecture | 4 projects above |
-| ≥5 models incl. ternary | 9 entities; `Ticket` is the ternary |
-| Full CRUD for all entities | `ArtistController`, `VenueController`, `ConcertController`, `TicketCategoryController`, `TicketController`, `PerformanceController` |
-| Domain-specific business logic | Venue **capacity / sold-out** enforcement, **category-multiplier pricing**, **24h cancellation rule**, `TicketsSold` counter, **revenue report** |
-| **ETL** | `EtlSyncService` (extract artists from iTunes → transform to `Artist` + genre mapping → bulk upsert), logged in `EtlSyncLog`, scheduled by `SyncArtistsBackgroundService`, or triggered via `POST /api/report/etl/run` |
-| **External API integration** | `ItunesMusicApiClient` typed `HttpClient` against the keyless **iTunes Search API** (`MusicApiSettings`) — imports real artists |
-| **Async queue** | `POST /api/external/tickets/register` enqueues an `InboundEventEntry`; `ProcessInboundEventsBackgroundService` + `InboundEventEntryProcessor` drain it into tickets |
-| **Email integration** | `EmailService` (MailKit); sends ticket confirmations. Dev writes to `wwwroot/outbox` when SMTP is disabled |
-| **Excel export** | `ExcelExportService` (ClosedXML); `GET /api/report/revenue/excel` |
-| Extras | JWT auth (`AuthController`), API-key middleware, fixed-window rate limiting, `IMemoryCache`, audit interceptor, Evolve SQL migrations |
-
-## Running
+## Како да се стартува
 
 ```bash
 cd Web
-dotnet run --launch-profile http     # http://localhost:5240
+dotnet run
 ```
 
-On first run (Development) the schema is created and `DbSeeder` seeds ~60 users, 20 artists,
-10 venues, 40 concerts, performances and hundreds of tickets. A seeded external `ApiClient`
-key `concert-external-key-123` is available for the `/api/external/*` endpoints.
+Потоа отвори во browser:
 
-### Quick smoke test
+- **http://localhost:5240/** — едноставен тест панел каде можеш да ги пробаш сите функционалности со кликање
+- **http://localhost:5240/swagger** — Swagger документација на целото API
 
-```bash
-B=http://localhost:5240
-curl $B/api/concert
-curl $B/api/report/revenue
-curl -o revenue.xlsx $B/api/report/revenue/excel
-# enqueue an external ticket purchase
-curl -X POST $B/api/external/tickets/register -H "X-Api-Key: concert-external-key-123" \
-  -H "Content-Type: application/json" \
-  -d '{"concertId":"<id>","ticketCategoryId":"<id>","userId":"<id>"}'
-```
+При прво стартување базата автоматски се полни со тест податоци (артисти, концерти, корисници, билети).
 
-## Configuration (`appsettings*.json`)
+## Тест кориснички податоци
 
-- `ConnectionStrings:DefaultConnection` — SQLite database.
-- `MusicApiSettings` — external iTunes Search API base address, search terms, and `Enabled` toggle for the background ETL.
-- `EmailSettings` — SMTP; set `Enabled: true` and fill host/credentials to send real mail.
-- `ApiKeySettings` / `RateLimitSettings` / `CacheSettings` — integration knobs.
-- `Jwt` — token signing settings.
+- Email: `liam.smith0@concerts.dev` (или кој било друг seed-иран корисник)
+- Лозинка: `Password123!`
+- API клуч за надворешни барања: `concert-external-key-123`
+
+## Што прави апликацијата
+
+- Регистрација и најава со JWT
+- Преглед на концерти, изведувачи, локации
+- Купување билет — цената се пресметува автоматски (основна цена × множител на категорија)
+- QR код за секој билет + скенирање/check-in на влез
+- Email потврда при купување (во development се снима локално наместо реално да се испраќа)
+- Извештај за приход + извоз во Excel
+- ETL — автоматско преземање на изведувачи од надворешно API (iTunes)
+- Прием на билети од надворешен систем преку заштитен endpoint, обработени асинхроно во позадина
+
+## Конфигурација
+
+Поставките (конекција со база, email, iTunes API, JWT) се во `Web/appsettings.json`.

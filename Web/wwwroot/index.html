@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ConcertHub — Тест панел</title>
+<title>ConcertHub · Тест панел</title>
 <style>
   :root{
     --bg:#f6f4fa; --panel:#fff; --ink:#1b1626; --muted:#6c6480; --line:#e7e2ef;
@@ -35,7 +35,7 @@
   button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   select,input{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);
     border-radius:9px;padding:8px 10px;min-width:0}
-  .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
   label{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
   table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:10px}
   th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line);white-space:nowrap}
@@ -80,7 +80,7 @@
     <div class="row">
       <label>Концерт<select id="buyConcert" style="min-width:220px"></select></label>
       <label>Категорија<select id="buyCategory" style="min-width:160px"></select></label>
-      <label>Купувач<span id="buyerName" style="color:var(--ink);font-weight:600">—</span></label>
+      <label>Купувач<span id="buyerName" style="color:var(--ink);font-weight:600">/</span></label>
       <button class="ghost" onclick="newBuyer()">Нов купувач</button>
       <button onclick="buyTicket()">Купи билет</button>
     </div>
@@ -90,7 +90,7 @@
   <!-- 3. EMAIL -->
   <div class="card">
     <h2><span class="num">3</span> Email потврди (outbox)</h2>
-    <p class="hint">При купување се праќа email потврда. Во development се снима локално — еве ги последните пораки.</p>
+    <p class="hint">При купување се праќа email потврда. Во development се снима локално, еве ги последните пораки.</p>
     <button onclick="loadEmails()">Вчитај испратени email-ови</button>
     <div id="emailsOut"></div>
   </div>
@@ -110,7 +110,7 @@
 
   <!-- 5. ETL -->
   <div class="card">
-    <h2><span class="num">5</span> ETL — увоз на изведувачи од iTunes</h2>
+    <h2><span class="num">5</span> ETL: увоз на изведувачи од iTunes</h2>
     <p class="hint">Презема реални изведувачи од надворешно API (iTunes), ги трансформира и снима во база.</p>
     <button onclick="runEtl()">Пушти ETL увоз</button>
     <div id="etlOut"></div>
@@ -118,7 +118,7 @@
 
   <!-- 6. QUEUE -->
   <div class="card">
-    <h2><span class="num">6</span> Queue — асинхроно (надворешен систем)</h2>
+    <h2><span class="num">6</span> Queue: асинхроно (надворешен систем)</h2>
     <p class="hint">Праќа барање за билет преку заштитен endpoint (API-key). Барањето влегува во редица и се обработува во позадина.</p>
     <div class="row">
       <button onclick="sendExternal()">Прати барање (pending)</button>
@@ -130,7 +130,7 @@
   <!-- 7. QR CHECK-IN -->
   <div class="card">
     <h2><span class="num">7</span> QR билет &amp; Check-in на влез</h2>
-    <p class="hint">Секој билет добива уникатен QR код. На влезот чуварот го скенира — билетот станува „Used“. Повторен обид со ист билет се одбива.</p>
+    <p class="hint">Секој билет добива уникатен QR код. На влезот чуварот го скенира, билетот станува „Used“. Повторен обид со ист билет се одбива.</p>
     <div class="row">
       <button onclick="showQr()">Прикажи QR код (последен купен билет)</button>
       <button class="ghost" onclick="scanCheckIn()">Симулирај скенирање на влез</button>
@@ -175,7 +175,7 @@ async function loadConcerts(){
        <td class="num">${money(c.basePrice)}</td>
        <td class="num">${c.ticketsSold} / ${c.venueCapacity}</td>
        <td>${sold?'<span class="pill sold">Sold out</span>':'<span class="pill ok">Достапно</span>'}</td></tr>`);
-    const o=document.createElement("option");o.value=c.id;o.textContent=c.title+" — "+c.venueName;sel.appendChild(o);
+    const o=document.createElement("option");o.value=c.id;o.textContent=c.title+" · "+c.venueName;sel.appendChild(o);
   });
   $("#concertsTable").hidden=false;
   if(!categories.length) await loadCategories();
@@ -212,7 +212,7 @@ async function buyTicket(){
     out(el,`✓ Билет купен за <b>${esc(t.concertTitle)}</b><br>
       Категорија: <b>${esc(t.category)}</b> · Статус: <b>${esc(t.status)}</b> · Место: ${esc(t.seatNumber)}<br>
       Цена: <span class="big">${money(t.price)} EUR</span><br>
-      <span style="color:var(--muted)">📧 Испратена е email потврда — види чекор 3. QR код — чекор 7.</span>`,"ok");
+      <span style="color:var(--muted)">📧 Испратена е email потврда, види чекор 3. QR код: чекор 7.</span>`,"ok");
     loadConcerts();
   }catch(e){ out(el,"✗ "+esc(e.message),"err"); }
 }
@@ -292,7 +292,7 @@ async function scanCheckIn(){
   try{
     const r=await api("/api/ticket/check-in/scan",{method:"POST",headers:{"Content-Type":"application/json"},
       body:JSON.stringify({qrPayload:lastTicket.id})});
-    out(el,`✓ Влез одобрен · Статус: <b>${esc(r.status)}</b> · ${esc(r.attendeeName)} — ${esc(r.concertTitle)}<br>
+    out(el,`✓ Влез одобрен · Статус: <b>${esc(r.status)}</b> · ${esc(r.attendeeName)} · ${esc(r.concertTitle)}<br>
       <span style="color:var(--muted)">Кликни повторно за да видиш дека второ скенирање на истиот билет се одбива.</span>`,"ok");
   }catch(e){ out(el,"✗ "+esc(e.message),"err"); }
 }
