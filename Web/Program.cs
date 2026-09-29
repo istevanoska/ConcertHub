@@ -245,6 +245,7 @@ app.MapGet("/api", () => Results.Json(new
         "GET  /api/report/revenue", "GET /api/report/revenue/excel", "POST /api/report/etl/run",
         "POST /api/auth/register", "POST /api/auth/login",
         "POST /api/ticket/buy", "PATCH /api/ticket/{id}/pay", "PATCH /api/ticket/{id}/cancel",
+        "GET  /api/ticket/{id}/qr-code", "POST /api/ticket/check-in/scan",
         "POST /api/external/tickets/register  (needs X-Api-Key header)"
     }
 }));

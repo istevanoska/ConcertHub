@@ -126,6 +126,18 @@
     </div>
     <div id="queueOut"></div>
   </div>
+
+  <!-- 7. QR CHECK-IN -->
+  <div class="card">
+    <h2><span class="num">7</span> QR билет &amp; Check-in на влез</h2>
+    <p class="hint">Секој билет добива уникатен QR код. На влезот чуварот го скенира — билетот станува „Used“. Повторен обид со ист билет се одбива.</p>
+    <div class="row">
+      <button onclick="showQr()">Прикажи QR код (последен купен билет)</button>
+      <button class="ghost" onclick="scanCheckIn()">Симулирај скенирање на влез</button>
+    </div>
+    <div id="qrImg"></div>
+    <div id="qrOut"></div>
+  </div>
 </div>
 
 <script>
@@ -133,6 +145,7 @@ const $ = s => document.querySelector(s);
 let buyer = null;
 let categories = [];
 let lastEventId = null;
+let lastTicket = null;
 const API_KEY = "concert-external-key-123";
 
 function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
@@ -194,10 +207,12 @@ async function buyTicket(){
     const body={concertId:$("#buyConcert").value,ticketCategoryId:$("#buyCategory").value,
       userId:buyer.id,seatNumber:"A"+Math.floor(Math.random()*40+1)};
     const t=await api("/api/ticket/buy",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+    lastTicket = t;
+    $("#qrImg").innerHTML=""; $("#qrOut").innerHTML="";
     out(el,`✓ Билет купен за <b>${esc(t.concertTitle)}</b><br>
       Категорија: <b>${esc(t.category)}</b> · Статус: <b>${esc(t.status)}</b> · Место: ${esc(t.seatNumber)}<br>
       Цена: <span class="big">${money(t.price)} EUR</span><br>
-      <span style="color:var(--muted)">📧 Испратена е email потврда — види чекор 3.</span>`,"ok");
+      <span style="color:var(--muted)">📧 Испратена е email потврда — види чекор 3. QR код — чекор 7.</span>`,"ok");
     loadConcerts();
   }catch(e){ out(el,"✗ "+esc(e.message),"err"); }
 }
@@ -259,6 +274,26 @@ async function checkExternal(){
     const r=await api(`/api/external/tickets/register/${lastEventId}/status`,{headers:{"X-Api-Key":API_KEY}});
     const done=r.status==="completed";
     out(el,`Статус: <b>${esc(r.status)}</b>${r.ticketId?` · создаден билет: <code>${esc(r.ticketId)}</code>`:""}${r.error?` · грешка: ${esc(r.error)}`:""}`,done?"ok":"");
+  }catch(e){ out(el,"✗ "+esc(e.message),"err"); }
+}
+
+function showQr(){
+  const el=$("#qrImg"); const out2=$("#qrOut");
+  if(!lastTicket){ out(out2,"Прво купи билет во чекор 2.",""); return; }
+  out2.innerHTML="";
+  el.innerHTML = `<img src="/api/ticket/${lastTicket.id}/qr-code?_=${Date.now()}" alt="QR код за билет"
+      style="width:180px;height:180px;border:1px solid var(--line);border-radius:10px;padding:8px;background:#fff">
+    <div style="color:var(--muted);font-size:12px;margin-top:6px">Ticket ID: <code>${esc(lastTicket.id)}</code></div>`;
+}
+
+async function scanCheckIn(){
+  const el=$("#qrOut");
+  if(!lastTicket){ out(el,"Прво купи билет во чекор 2.",""); return; }
+  try{
+    const r=await api("/api/ticket/check-in/scan",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({qrPayload:lastTicket.id})});
+    out(el,`✓ Влез одобрен · Статус: <b>${esc(r.status)}</b> · ${esc(r.attendeeName)} — ${esc(r.concertTitle)}<br>
+      <span style="color:var(--muted)">Кликни повторно за да видиш дека второ скенирање на истиот билет се одбива.</span>`,"ok");
   }catch(e){ out(el,"✗ "+esc(e.message),"err"); }
 }
 
