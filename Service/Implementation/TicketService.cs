@@ -15,6 +15,7 @@ public class TicketService : ITicketService
     private readonly IConcertService _concertService;
     private readonly ITicketCategoryService _ticketCategoryService;
     private readonly IEmailService _emailService;
+    private readonly IQrCodeService _qrCodeService;
     private readonly ILogger<TicketService> _logger;
 
     public TicketService(
@@ -23,6 +24,7 @@ public class TicketService : ITicketService
         IConcertService concertService,
         ITicketCategoryService ticketCategoryService,
         IEmailService emailService,
+        IQrCodeService qrCodeService,
         ILogger<TicketService> logger)
     {
         _ticketRepository = ticketRepository;
@@ -30,6 +32,7 @@ public class TicketService : ITicketService
         _concertService = concertService;
         _ticketCategoryService = ticketCategoryService;
         _emailService = emailService;
+        _qrCodeService = qrCodeService;
         _logger = logger;
     }
 
@@ -143,8 +146,17 @@ public class TicketService : ITicketService
         if (ticket.Status == TicketStatus.Cancelled)
             throw new InvalidOperationException("Cannot check in a cancelled ticket.");
 
+        if (ticket.Status == TicketStatus.Used)
+            throw new InvalidOperationException("This ticket has already been checked in.");
+
         ticket.Status = TicketStatus.Used;
         return await _ticketRepository.UpdateAsync(ticket);
+    }
+
+    public async Task<byte[]> GenerateQrCodeAsync(Guid id)
+    {
+        var ticket = await GetByIdNotNullAsync(id);
+        return _qrCodeService.GeneratePng(ticket.Id.ToString());
     }
 
     public async Task<Ticket> CancelAsync(Guid id)

@@ -101,6 +101,7 @@ builder.Services.AddScoped<IPerformanceService, PerformanceService>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IFileUploadService, FileUploadService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IQrCodeService, QrCodeService>();
 builder.Services.AddScoped<IExcelExportService, ExcelExportService>();
 
 builder.Services.AddScoped<IEtlSyncService, EtlSyncService>();

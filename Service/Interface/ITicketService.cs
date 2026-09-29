@@ -18,4 +18,5 @@ public interface ITicketService
     Task<Ticket> CheckInAsync(Guid id);
     Task<Ticket> CancelAsync(Guid id);
     Task<Ticket> UpdateRefundPathByIdAsync(Guid id, string path);
+    Task<byte[]> GenerateQrCodeAsync(Guid id);
 }

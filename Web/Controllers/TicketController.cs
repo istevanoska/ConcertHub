@@ -59,4 +59,15 @@ public class TicketController : ControllerBase
     [Consumes("multipart/form-data")]
     public async Task<IActionResult> UploadRefundDocumentAsync([FromRoute] Guid id, IFormFile file)
         => Ok(await _mapper.UploadRefundDocumentAsync(id, file));
+
+    [HttpGet("{id}/qr-code")]
+    public async Task<IActionResult> GetQrCodeAsync(Guid id)
+    {
+        var png = await _mapper.GetQrCodeAsync(id);
+        return File(png, "image/png");
+    }
+
+    [HttpPost("check-in/scan")]
+    public async Task<IActionResult> CheckInByQrAsync([FromBody] QrCheckInRequest request)
+        => Ok(await _mapper.CheckInByQrAsync(request));
 }

@@ -91,4 +91,18 @@ public class TicketMapper
         var result = await _ticketService.UpdateRefundPathByIdAsync(id, path);
         return result.ToResponse();
     }
+
+    public async Task<byte[]> GetQrCodeAsync(Guid id)
+    {
+        return await _ticketService.GenerateQrCodeAsync(id);
+    }
+
+    public async Task<TicketResponse> CheckInByQrAsync(QrCheckInRequest request)
+    {
+        if (!Guid.TryParse(request.QrPayload, out var ticketId))
+            throw new InvalidOperationException("Invalid QR code.");
+
+        var result = await _ticketService.CheckInAsync(ticketId);
+        return result.ToResponse();
+    }
 }
