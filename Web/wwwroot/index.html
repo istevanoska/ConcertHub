@@ -37,10 +37,10 @@
     border-radius:9px;padding:8px 10px;min-width:0}
   .row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
   label{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
-  table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:10px}
+  table{width:max-content;min-width:100%;border-collapse:collapse;font-size:13.5px;margin-top:10px}
   th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line);white-space:nowrap}
   th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
-  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+  td.numcol,th.numcol{text-align:right;font-variant-numeric:tabular-nums}
   .tablewrap{overflow-x:auto}
   .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700}
   .pill.sold{background:var(--warn);color:#fff}
@@ -60,7 +60,7 @@
   <header>
     <div class="eyebrow">ConcertHub · тест панел</div>
     <h1>🎤 Концерти &amp; билети</h1>
-    <p class="lead">Тестирај ги функционалностите со кликање. Купувањето билет праќа email (види чекор 3) и се одразува во извештајот за приход (чекор 4). <a href="/swagger" style="color:var(--accent)">Swagger →</a></p>
+    <a href="/swagger" style="color:var(--accent)">Swagger →</a>
   </header>
 
   <!-- 1. CONCERTS -->
@@ -69,7 +69,7 @@
     <p class="hint">Листа од сите концерти со продадени билети и капацитет на салата.</p>
     <button onclick="loadConcerts()">Вчитај концерти</button>
     <div class="tablewrap"><table id="concertsTable" hidden>
-      <thead><tr><th>Концерт</th><th>Сала</th><th>Датум</th><th class="num">Цена</th><th class="num">Продадени / Капацитет</th><th>Статус</th></tr></thead>
+      <thead><tr><th>Концерт</th><th>Сала</th><th>Датум</th><th class="numcol">Цена</th><th class="numcol">Продадени / Капацитет</th><th>Статус</th></tr></thead>
       <tbody></tbody></table></div>
   </div>
 
@@ -104,7 +104,7 @@
       <a class="dl" href="/api/report/revenue/excel"><button class="ghost">⬇ Симни Excel (.xlsx)</button></a>
     </div>
     <div class="tablewrap"><table id="revTable" hidden>
-      <thead><tr><th>Концерт</th><th>Сала</th><th class="num">Продадени</th><th class="num">Капацитет</th><th class="num">Пополнетост</th><th class="num">Приход</th></tr></thead>
+      <thead><tr><th>Концерт</th><th>Сала</th><th class="numcol">Продадени</th><th class="numcol">Капацитет</th><th class="numcol">Пополнетост</th><th class="numcol">Приход</th></tr></thead>
       <tbody></tbody></table></div>
   </div>
 
@@ -172,8 +172,8 @@ async function loadConcerts(){
     tb.insertAdjacentHTML("beforeend",
       `<tr><td>${esc(c.title)}</td><td>${esc(c.venueName)}</td>
        <td>${new Date(c.startTime).toLocaleDateString()}</td>
-       <td class="num">${money(c.basePrice)}</td>
-       <td class="num">${c.ticketsSold} / ${c.venueCapacity}</td>
+       <td class="numcol">${money(c.basePrice)}</td>
+       <td class="numcol">${c.ticketsSold} / ${c.venueCapacity}</td>
        <td>${sold?'<span class="pill sold">Sold out</span>':'<span class="pill ok">Достапно</span>'}</td></tr>`);
     const o=document.createElement("option");o.value=c.id;o.textContent=c.title+" · "+c.venueName;sel.appendChild(o);
   });
@@ -234,9 +234,9 @@ async function loadRevenue(){
   list.slice(0,80).forEach(r=>{
     tb.insertAdjacentHTML("beforeend",
       `<tr><td>${esc(r.title)}</td><td>${esc(r.venueName)}</td>
-       <td class="num">${r.ticketsSold}</td><td class="num">${r.venueCapacity}</td>
-       <td class="num">${(r.occupancyRate*100).toFixed(1)}%</td>
-       <td class="num">${money(r.totalRevenue)}</td></tr>`);
+       <td class="numcol">${r.ticketsSold}</td><td class="numcol">${r.venueCapacity}</td>
+       <td class="numcol">${(r.occupancyRate*100).toFixed(1)}%</td>
+       <td class="numcol">${money(r.totalRevenue)}</td></tr>`);
   });
   $("#revTable").hidden=false;
 }
