@@ -98,6 +98,7 @@ builder.Services.AddScoped<IConcertService, ConcertService>();
 builder.Services.AddScoped<ITicketCategoryService, TicketCategoryService>();
 builder.Services.AddScoped<ITicketService, TicketService>();
 builder.Services.AddScoped<IPerformanceService, PerformanceService>();
+builder.Services.AddScoped<IFavoriteArtistService, FavoriteArtistService>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IFileUploadService, FileUploadService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
@@ -114,6 +115,7 @@ builder.Services.AddScoped<ConcertMapper>();
 builder.Services.AddScoped<TicketCategoryMapper>();
 builder.Services.AddScoped<TicketMapper>();
 builder.Services.AddScoped<PerformanceMapper>();
+builder.Services.AddScoped<FavoriteMapper>();
 
 builder.Services.AddHostedService<SyncArtistsBackgroundService>();
 builder.Services.AddHostedService<ProcessInboundEventsBackgroundService>();
@@ -246,6 +248,7 @@ app.MapGet("/api", () => Results.Json(new
         "POST /api/auth/register", "POST /api/auth/login",
         "POST /api/ticket/buy", "PATCH /api/ticket/{id}/pay", "PATCH /api/ticket/{id}/cancel",
         "GET  /api/ticket/{id}/qr-code", "POST /api/ticket/check-in/scan",
+        "POST /api/favorite/artist", "DELETE /api/favorite/artist", "GET /api/favorite/artist/{userId}",
         "POST /api/external/tickets/register  (needs X-Api-Key header)"
     }
 }));

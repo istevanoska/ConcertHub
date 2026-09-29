@@ -138,6 +138,21 @@
     <div id="qrImg"></div>
     <div id="qrOut"></div>
   </div>
+
+  <!-- 8. FAVORITES + NOTIFICATIONS -->
+  <div class="card">
+    <h2><span class="num">8</span> Омилени изведувачи &amp; известувања</h2>
+    <p class="hint">Маркирај изведувач како омилен. Кога изведувачот ќе добие нов настап на некој концерт, сите кои го следат автоматски добиваат email (провери во чекор 3).</p>
+    <div class="row">
+      <label>Изведувач<select id="favArtist" style="min-width:220px"></select></label>
+      <button class="ghost" onclick="loadArtistsForFavorites()">Вчитај изведувачи</button>
+      <button onclick="addFavorite()">Маркирај како омилен</button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button class="ghost" onclick="addPerformanceForFavorite()">Додади нов настап за изведувачот (концерт од чекор 2)</button>
+    </div>
+    <div id="favOut"></div>
+  </div>
 </div>
 
 <script>
@@ -297,9 +312,49 @@ async function scanCheckIn(){
   }catch(e){ out(el,"✗ "+esc(e.message),"err"); }
 }
 
+let favArtists = [];
+
+async function loadArtistsForFavorites(){
+  favArtists = await api("/api/artist");
+  const sel=$("#favArtist"); sel.innerHTML="";
+  favArtists.forEach(a=>{
+    const o=document.createElement("option");o.value=a.id;o.textContent=a.name;sel.appendChild(o);
+  });
+}
+
+async function addFavorite(){
+  const el=$("#favOut");
+  try{
+    if(!buyer) await newBuyer();
+    if(!favArtists.length) await loadArtistsForFavorites();
+    const artistId=$("#favArtist").value;
+    const artistName=favArtists.find(a=>a.id===artistId)?.name||artistId;
+    await api("/api/favorite/artist",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({userId:buyer.id,artistId})});
+    out(el,`✓ <b>${esc(artistName)}</b> е маркиран како омилен за <b>${esc(buyer.email)}</b>.`,"ok");
+  }catch(e){ out(el,"✗ "+esc(e.message),"err"); }
+}
+
+async function addPerformanceForFavorite(){
+  const el=$("#favOut");
+  try{
+    if(!favArtists.length) await loadArtistsForFavorites();
+    if(!$("#buyConcert").value) await loadConcerts();
+    const artistId=$("#favArtist").value;
+    const artistName=favArtists.find(a=>a.id===artistId)?.name||artistId;
+    const concertId=$("#buyConcert").value;
+    const concertName=$("#buyConcert").selectedOptions[0]?.textContent||concertId;
+    await api("/api/performance",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({artistId,concertId,slotOrder:9,durationMinutes:45})});
+    out(el,`✓ <b>${esc(artistName)}</b> е додаден на <b>${esc(concertName)}</b>.<br>
+      <span style="color:var(--muted)">Ако некој го следи изведувачот, добива email, провери во чекор 3.</span>`,"ok");
+  }catch(e){ out(el,"✗ "+esc(e.message),"err"); }
+}
+
 // автоматски подготви купувач и вчитај концерти на старт
 newBuyer().catch(()=>{});
 loadConcerts().catch(()=>{});
+loadArtistsForFavorites().catch(()=>{});
 </script>
 </body>
 </html>
