@@ -10,17 +10,20 @@ public class ReportController : ControllerBase
     private readonly IConcertService _concertService;
     private readonly IExcelExportService _excelExportService;
     private readonly IEtlSyncService _etlSyncService;
+    private readonly IReminderService _reminderService;
     private readonly IWebHostEnvironment _env;
 
     public ReportController(
         IConcertService concertService,
         IExcelExportService excelExportService,
         IEtlSyncService etlSyncService,
+        IReminderService reminderService,
         IWebHostEnvironment env)
     {
         _concertService = concertService;
         _excelExportService = excelExportService;
         _etlSyncService = etlSyncService;
+        _reminderService = reminderService;
         _env = env;
     }
 
@@ -44,6 +47,13 @@ public class ReportController : ControllerBase
     {
         await _etlSyncService.SyncAllAsync();
         return Ok(new { message = "ETL sync completed." });
+    }
+
+    [HttpPost("reminders/run")]
+    public async Task<IActionResult> RunRemindersAsync()
+    {
+        var count = await _reminderService.SendUpcomingConcertRemindersAsync();
+        return Ok(new { message = "Reminder check completed.", remindersSent = count });
     }
 
     [HttpGet("emails")]

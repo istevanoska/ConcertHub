@@ -11,6 +11,7 @@ public class Concert : BaseAuditableEntity<ConcertApplicationUser>
     public decimal BasePrice { get; set; }
 
     public int TicketsSold { get; set; }
+    public DateTime? ReminderSentAt { get; set; }
 
     public Guid VenueId { get; set; }
     public virtual Venue Venue { get; set; } = null!;

@@ -99,6 +99,7 @@ builder.Services.AddScoped<ITicketCategoryService, TicketCategoryService>();
 builder.Services.AddScoped<ITicketService, TicketService>();
 builder.Services.AddScoped<IPerformanceService, PerformanceService>();
 builder.Services.AddScoped<IFavoriteArtistService, FavoriteArtistService>();
+builder.Services.AddScoped<IReminderService, ReminderService>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IFileUploadService, FileUploadService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
@@ -119,6 +120,7 @@ builder.Services.AddScoped<FavoriteMapper>();
 
 builder.Services.AddHostedService<SyncArtistsBackgroundService>();
 builder.Services.AddHostedService<ProcessInboundEventsBackgroundService>();
+builder.Services.AddHostedService<ConcertReminderBackgroundService>();
 
 builder.Services.Configure<CacheSettings>(builder.Configuration.GetSection("CacheSettings"));
 builder.Services.Configure<RateLimitSettings>(builder.Configuration.GetSection("RateLimitSettings"));
@@ -245,6 +247,7 @@ app.MapGet("/api", () => Results.Json(new
         "GET  /api/artist", "GET /api/venue", "GET /api/concert", "GET /api/ticketcategory",
         "GET  /api/ticket/paged", "GET /api/performance/paged",
         "GET  /api/report/revenue", "GET /api/report/revenue/excel", "POST /api/report/etl/run",
+        "POST /api/report/reminders/run",
         "POST /api/auth/register", "POST /api/auth/login",
         "POST /api/ticket/buy", "PATCH /api/ticket/{id}/pay", "PATCH /api/ticket/{id}/cancel",
         "GET  /api/ticket/{id}/qr-code", "POST /api/ticket/check-in/scan",

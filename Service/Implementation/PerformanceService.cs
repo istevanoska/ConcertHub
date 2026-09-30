@@ -11,15 +11,18 @@ public class PerformanceService : IPerformanceService
     private readonly IRepository<Performance> _performanceRepository;
     private readonly IArtistService _artistService;
     private readonly IConcertService _concertService;
+    private readonly IFavoriteArtistService _favoriteArtistService;
 
     public PerformanceService(
         IRepository<Performance> performanceRepository,
         IArtistService artistService,
-        IConcertService concertService)
+        IConcertService concertService,
+        IFavoriteArtistService favoriteArtistService)
     {
         _performanceRepository = performanceRepository;
         _artistService = artistService;
         _concertService = concertService;
+        _favoriteArtistService = favoriteArtistService;
     }
 
     public async Task<Performance> GetByIdNotNullAsync(Guid id)
@@ -50,8 +53,8 @@ public class PerformanceService : IPerformanceService
     public async Task<Performance> CreateAsync(Guid artistId, Guid concertId, int slotOrder, int durationMinutes)
     {
 
-        await _artistService.GetByIdNotNullAsync(artistId);
-        await _concertService.GetByIdNotNullAsync(concertId);
+        var artist = await _artistService.GetByIdNotNullAsync(artistId);
+        var concert = await _concertService.GetByIdNotNullAsync(concertId);
 
         var performance = new Performance
         {
@@ -60,7 +63,11 @@ public class PerformanceService : IPerformanceService
             SlotOrder = slotOrder,
             DurationMinutes = durationMinutes
         };
-        return await _performanceRepository.InsertAsync(performance);
+        var result = await _performanceRepository.InsertAsync(performance);
+
+        await _favoriteArtistService.NotifyFollowersAsync(artist, concert);
+
+        return result;
     }
 
     public async Task<Performance> UpdateAsync(Guid id, Guid artistId, Guid concertId, int slotOrder, int durationMinutes)

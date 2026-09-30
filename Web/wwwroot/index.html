@@ -153,6 +153,14 @@
     </div>
     <div id="favOut"></div>
   </div>
+
+  <!-- 9. REMINDERS -->
+  <div class="card">
+    <h2><span class="num">9</span> Потсетник 24ч пред концерт</h2>
+    <p class="hint">Позадински job секои 15 мин проверува концерти во следните 24 часа и им праќа email на сите со билет. Копчето долу креира концерт "утре" + билет и веднаш ја активира проверката.</p>
+    <button onclick="demoReminder()">Демо: концерт утре + прати потсетници</button>
+    <div id="reminderOut"></div>
+  </div>
 </div>
 
 <script>
@@ -348,6 +356,26 @@ async function addPerformanceForFavorite(){
       body:JSON.stringify({artistId,concertId,slotOrder:9,durationMinutes:45})});
     out(el,`✓ <b>${esc(artistName)}</b> е додаден на <b>${esc(concertName)}</b>.<br>
       <span style="color:var(--muted)">Ако некој го следи изведувачот, добива email, провери во чекор 3.</span>`,"ok");
+  }catch(e){ out(el,"✗ "+esc(e.message),"err"); }
+}
+
+async function demoReminder(){
+  const el=$("#reminderOut");
+  try{
+    if(!buyer) await newBuyer();
+    if(!categories.length) await loadCategories();
+    const venues=await api("/api/venue");
+    const venue=venues[0];
+    const start=new Date(Date.now()+20*60*60*1000);
+    const end=new Date(start.getTime()+2*60*60*1000);
+    const concert=await api("/api/concert",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({title:"Demo Reminder Concert",venueId:venue.id,startTime:start.toISOString(),endTime:end.toISOString(),basePrice:30})});
+    await api("/api/ticket/buy",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({concertId:concert.id,ticketCategoryId:categories[0].id,userId:buyer.id,seatNumber:"A1"})});
+    const result=await api("/api/report/reminders/run",{method:"POST"});
+    out(el,`✓ Концерт "<b>${esc(concert.title)}</b>" закажан за утре (${venue.name}), билет купен за <b>${esc(buyer.email)}</b>.<br>
+      Потсетници испратени: <b>${result.remindersSent}</b><br>
+      <span style="color:var(--muted)">Провери во чекор 3 за да го видиш мејлот.</span>`,"ok");
   }catch(e){ out(el,"✗ "+esc(e.message),"err"); }
 }
 

@@ -16,6 +16,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<ApiClient> ApiClients { get; set; }
     public DbSet<EtlSyncLog> EtlSyncLogs { get; set; }
     public DbSet<InboundEventEntry> InboundEventEntries { get; set; }
+    public DbSet<FavoriteArtist> FavoriteArtists { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -44,5 +45,9 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .WithMany(c => c.Tickets)
             .HasForeignKey(t => t.TicketCategoryId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<FavoriteArtist>()
+            .HasIndex(f => new { f.UserId, f.ArtistId })
+            .IsUnique();
     }
 }
